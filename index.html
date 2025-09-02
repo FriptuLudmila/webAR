@@ -4,17 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AR.js HIRO Marker Demo</title>
-    
-    <!-- AR.js and A-Frame -->
+
+    <!-- Updated AR.js and A-Frame versions -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.0/aframe.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ar.js/2.2.2/aframe-ar.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+
     <style>
         body {
             margin: 0;
             font-family: Arial, sans-serif;
+            overflow: hidden;
         }
-        
+
         /* UI Overlay */
         .ui-overlay {
             position: fixed;
@@ -22,13 +23,26 @@
             left: 10px;
             right: 10px;
             z-index: 1000;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 15px;
             border-radius: 10px;
             font-size: 14px;
         }
-        
+
+        .status {
+            position: fixed;
+            top: 120px;
+            left: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
         .controls {
             position: fixed;
             bottom: 20px;
@@ -38,7 +52,7 @@
             display: flex;
             gap: 10px;
         }
-        
+
         .btn {
             background: #4CC3D9;
             color: white;
@@ -48,13 +62,21 @@
             cursor: pointer;
             font-size: 14px;
         }
-        
+
         .btn:hover {
             background: #3aa3c7;
         }
-        
+
         .btn:active {
             transform: scale(0.95);
+        }
+
+        .error {
+            background: #ff5a5f !important;
+        }
+
+        .success {
+            background: #4CAF50 !important;
         }
     </style>
 </head>
@@ -64,28 +86,46 @@
         <h3>🎯 AR.js HIRO Marker Demo</h3>
         <p>📱 Point your camera at a HIRO marker to see the 3D object</p>
         <p>🖱️ Click the cube or use buttons below to interact</p>
-        <small>Make sure the marker is well-lit and fully visible</small>
+        <small>Make sure you're on HTTPS and allow camera access</small>
     </div>
-    
+
+    <!-- Status display -->
+    <div id="status" class="status">
+        Initializing camera...
+    </div>
+
     <!-- Control buttons -->
     <div class="controls">
         <button id="toggle-color" class="btn">Change Color</button>
         <button id="toggle-scale" class="btn">Change Size</button>
+        <button id="request-camera" class="btn">Request Camera</button>
     </div>
-    
-    <!-- AR Scene -->
+
+    <!-- AR Scene with updated parameters -->
     <a-scene
         vr-mode-ui="enabled: false"
-        renderer="antialias: true; colorManagement: true"
+        renderer="antialias: true; colorManagement: true; precision: medium"
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; patternRatio: 0.9;">
-        
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; patternRatio: 0.9; trackingMethod: best; smooth: true; smoothCount: 10; smoothTolerance: 0.01; smoothThreshold: 5;">
+
+        <!-- Assets for preloading -->
+        <a-assets>
+            <!-- You can preload textures or models here if needed -->
+        </a-assets>
+
         <!-- Lighting for better model visibility -->
-        <a-entity light="type: ambient; intensity: 0.8"></a-entity>
-        <a-entity light="type: directional; intensity: 0.8" position="1 1 0"></a-entity>
-        
-        <!-- HIRO Marker -->
-        <a-marker preset="hiro">
+        <a-entity light="type: ambient; intensity: 0.9"></a-entity>
+        <a-entity light="type: directional; intensity: 0.5" position="1 1 0"></a-entity>
+
+        <!-- HIRO Marker with updated settings -->
+        <a-marker 
+            preset="hiro" 
+            smooth="true" 
+            smoothCount="10" 
+            smoothTolerance="0.01" 
+            smoothThreshold="5"
+            id="hiro-marker">
+            
             <!-- Animated 3D Box -->
             <a-box 
                 id="cube" 
@@ -94,11 +134,12 @@
                 height="0.5" 
                 width="0.5" 
                 color="#4CC3D9"
+                material="metalness: 0.2; roughness: 0.8"
                 animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear"
                 animation__bob="property: position; to: 0 0.8 0; dir: alternate; loop: true; dur: 2000; easing: easeInOutSine"
                 shadow="cast: true; receive: false">
             </a-box>
-            
+
             <!-- Reference plane to show scale and origin -->
             <a-plane 
                 position="0 0 0" 
@@ -109,55 +150,129 @@
                 opacity="0.25"
                 shadow="receive: true">
             </a-plane>
+
+            <!-- Add text for debugging -->
+            <a-text
+                value="AR Working!"
+                position="0 1.5 0"
+                align="center"
+                color="#ffffff"
+                scale="2 2 2">
+            </a-text>
         </a-marker>
-        
+
         <!-- Camera entity required by AR.js -->
-        <a-entity camera></a-entity>
+        <a-entity camera look-controls-enabled="false"></a-entity>
     </a-scene>
 
     <script>
         // Wait for DOM to load
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('AR.js app starting...');
+            
             // Get references to interactive elements
             const cube = document.getElementById('cube');
             const btnColor = document.getElementById('toggle-color');
             const btnScale = document.getElementById('toggle-scale');
-            
+            const btnCamera = document.getElementById('request-camera');
+            const statusDiv = document.getElementById('status');
+            const scene = document.querySelector('a-scene');
+
             // State variables for interactions
             let colorToggle = false;
             let scaleToggle = false;
-            
+
+            // Function to update status
+            function updateStatus(message, type = 'info') {
+                statusDiv.textContent = message;
+                statusDiv.className = `status ${type}`;
+                console.log(`Status: ${message}`);
+            }
+
+            // Manual camera request
+            btnCamera.addEventListener('click', async () => {
+                try {
+                    updateStatus('Requesting camera access...', 'info');
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: 'environment',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        } 
+                    });
+                    updateStatus('Camera access granted!', 'success');
+                    // Stop the test stream - AR.js will handle the real one
+                    stream.getTracks().forEach(track => track.stop());
+                } catch (error) {
+                    updateStatus(`Camera error: ${error.message}`, 'error');
+                    console.error('Camera access error:', error);
+                }
+            });
+
             // Color toggle functionality
             btnColor.addEventListener('click', () => {
                 colorToggle = !colorToggle;
                 cube.setAttribute('color', colorToggle ? '#ff5a5f' : '#4CC3D9');
                 console.log('Color changed to:', colorToggle ? 'red' : 'blue');
             });
-            
+
             // Scale toggle functionality
             btnScale.addEventListener('click', () => {
                 scaleToggle = !scaleToggle;
                 cube.setAttribute('scale', scaleToggle ? '1.4 1.4 1.4' : '1 1 1');
                 console.log('Scale changed to:', scaleToggle ? 'large' : 'normal');
-            });
-            
+            }); 
+
             // Direct cube interaction - click on the 3D object
             cube.addEventListener('click', () => {
                 btnColor.click(); // Trigger color change when cube is clicked
                 console.log('Cube clicked directly');
             });
-            
-            // Marker tracking events for debugging
-            const marker = document.querySelector('a-marker');
-            marker.addEventListener('markerFound', () => {
-                console.log('🎯 HIRO Marker detected and tracking started');
+
+            // AR.js events
+            scene.addEventListener('arjs-video-loaded', () => {
+                updateStatus('Camera loaded successfully!', 'success');
             });
-            
-            marker.addEventListener('markerLost', () => {
-                console.log('❌ HIRO Marker lost');
+
+            scene.addEventListener('camera-error', (error) => {
+                updateStatus('Camera failed to load', 'error');
+                console.error('Camera error:', error);
             });
-            
-            console.log('AR.js app initialized successfully');
+
+            // Marker tracking events
+            const marker = document.getElementById('hiro-marker');
+            if (marker) {
+                marker.addEventListener('markerFound', () => {
+                    updateStatus('🎯 HIRO Marker detected!', 'success');
+                    console.log('Marker found');
+                });
+
+                marker.addEventListener('markerLost', () => {
+                    updateStatus('❌ HIRO Marker lost', 'error');
+                    console.log('Marker lost');
+                });
+            }
+
+            // Check if we're on HTTPS
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                updateStatus('⚠️ HTTPS required for camera access', 'error');
+            }
+
+            // Check for getUserMedia support
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                updateStatus('❌ Camera not supported in this browser', 'error');
+            } else {
+                updateStatus('Ready - allow camera access when prompted', 'info');
+            }
+
+            console.log('AR.js app initialized');
+        });
+
+        // Global error handler
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e.error);
+            document.getElementById('status').textContent = `Error: ${e.error.message}`;
+            document.getElementById('status').className = 'status error';
         });
     </script>
 </body>
