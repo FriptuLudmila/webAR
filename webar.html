@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR.js HIRO Marker Demo</title>
+    
+    <!-- AR.js and A-Frame -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.0/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ar.js/2.2.2/aframe-ar.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        /* UI Overlay */
+        .ui-overlay {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            background: #4CC3D9;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background: #3aa3c7;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <!-- UI Overlay with instructions -->
+    <div class="ui-overlay">
+        <h3>🎯 AR.js HIRO Marker Demo</h3>
+        <p>📱 Point your camera at a HIRO marker to see the 3D object</p>
+        <p>🖱️ Click the cube or use buttons below to interact</p>
+        <small>Make sure the marker is well-lit and fully visible</small>
+    </div>
+    
+    <!-- Control buttons -->
+    <div class="controls">
+        <button id="toggle-color" class="btn">Change Color</button>
+        <button id="toggle-scale" class="btn">Change Size</button>
+    </div>
+    
+    <!-- AR Scene -->
+    <a-scene
+        vr-mode-ui="enabled: false"
+        renderer="antialias: true; colorManagement: true"
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false; patternRatio: 0.9;">
+        
+        <!-- Lighting for better model visibility -->
+        <a-entity light="type: ambient; intensity: 0.8"></a-entity>
+        <a-entity light="type: directional; intensity: 0.8" position="1 1 0"></a-entity>
+        
+        <!-- HIRO Marker -->
+        <a-marker preset="hiro">
+            <!-- Animated 3D Box -->
+            <a-box 
+                id="cube" 
+                position="0 0.5 0" 
+                depth="0.5" 
+                height="0.5" 
+                width="0.5" 
+                color="#4CC3D9"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear"
+                animation__bob="property: position; to: 0 0.8 0; dir: alternate; loop: true; dur: 2000; easing: easeInOutSine"
+                shadow="cast: true; receive: false">
+            </a-box>
+            
+            <!-- Reference plane to show scale and origin -->
+            <a-plane 
+                position="0 0 0" 
+                rotation="-90 0 0" 
+                width="2" 
+                height="2" 
+                color="#222" 
+                opacity="0.25"
+                shadow="receive: true">
+            </a-plane>
+        </a-marker>
+        
+        <!-- Camera entity required by AR.js -->
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get references to interactive elements
+            const cube = document.getElementById('cube');
+            const btnColor = document.getElementById('toggle-color');
+            const btnScale = document.getElementById('toggle-scale');
+            
+            // State variables for interactions
+            let colorToggle = false;
+            let scaleToggle = false;
+            
+            // Color toggle functionality
+            btnColor.addEventListener('click', () => {
+                colorToggle = !colorToggle;
+                cube.setAttribute('color', colorToggle ? '#ff5a5f' : '#4CC3D9');
+                console.log('Color changed to:', colorToggle ? 'red' : 'blue');
+            });
+            
+            // Scale toggle functionality
+            btnScale.addEventListener('click', () => {
+                scaleToggle = !scaleToggle;
+                cube.setAttribute('scale', scaleToggle ? '1.4 1.4 1.4' : '1 1 1');
+                console.log('Scale changed to:', scaleToggle ? 'large' : 'normal');
+            });
+            
+            // Direct cube interaction - click on the 3D object
+            cube.addEventListener('click', () => {
+                btnColor.click(); // Trigger color change when cube is clicked
+                console.log('Cube clicked directly');
+            });
+            
+            // Marker tracking events for debugging
+            const marker = document.querySelector('a-marker');
+            marker.addEventListener('markerFound', () => {
+                console.log('🎯 HIRO Marker detected and tracking started');
+            });
+            
+            marker.addEventListener('markerLost', () => {
+                console.log('❌ HIRO Marker lost');
+            });
+            
+            console.log('AR.js app initialized successfully');
+        });
+    </script>
+</body>
+</html>
