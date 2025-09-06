@@ -3,11 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Web AR with AR.js - HW1</title>
+    <title>Web AR with AR.js - HW1 (Simple Test)</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-      /* Simple CSS for the UI overlay */
       #ui-overlay {
         position: absolute;
         bottom: 10px;
@@ -31,10 +30,9 @@
     </div>
 
     <a-scene
-      vr-mode-ui="enabled: false"
-      renderer="antialias: true; colorManagement: true"
       embedded
-      arjs="sourceType: webcam; sourceParameters: { facingMode: 'environment', width: 1280, height: 720 }; displayWidth: 1280; displayHeight: 720; debugUIEnabled: false; patternRatio: 0.75;">
+      vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; debugUIEnabled: true;">
 
       <a-assets>
         <a-asset-item id="rocket-model" src="https://poly.pizza/m/9D0od8u4kYn/0.glb"></a-asset-item>
@@ -60,23 +58,13 @@
     </a-scene>
 
     <script>
-      // Wait for the scene to load before adding event listeners
       document.addEventListener('DOMContentLoaded', () => {
         const rocket = document.getElementById('rocket');
-        
-        // A variable to keep track of the model's visibility state
         let isVisible = true;
-
-        // Add a click/tap event listener to the 3D model
         rocket.addEventListener('click', () => {
-          // Toggle the state
           isVisible = !isVisible;
-          // Set the 'visible' attribute on the model
           rocket.setAttribute('visible', isVisible);
-          console.log(`Rocket visibility set to: ${isVisible}`);
         });
-
-        // Helpful logs for debugging marker detection
         const marker = document.querySelector('a-marker');
         marker.addEventListener('markerFound', () => console.log('HIRO marker found.'));
         marker.addEventListener('markerLost', () => console.log('HIRO marker lost.'));
