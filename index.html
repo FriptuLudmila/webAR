@@ -34,7 +34,7 @@
       vr-mode-ui="enabled: false"
       renderer="antialias: true; colorManagement: true"
       embedded
-      arjs="sourceType: webcam; debugUIEnabled: false; patternRatio: 0.9;">
+      arjs="sourceType: webcam; sourceParameters: { facingMode: 'environment' }; debugUIEnabled: false; patternRatio: 0.9;">
 
       <a-assets>
         <a-asset-item id="rocket-model" src="https://poly.pizza/m/9D0od8u4kYn/0.glb"></a-asset-item>
@@ -76,7 +76,7 @@
           console.log(`Rocket visibility set to: ${isVisible}`);
         });
 
-        // Helpful logs for debugging marker detection [cite: 6]
+        // Helpful logs for debugging marker detection
         const marker = document.querySelector('a-marker');
         marker.addEventListener('markerFound', () => console.log('HIRO marker found.'));
         marker.addEventListener('markerLost', () => console.log('HIRO marker lost.'));
