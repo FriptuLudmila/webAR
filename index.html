@@ -3,10 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Web AR with AR.js - HW1 (Simple Test)</title>
+    <title>Web AR with AR.js - Final</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
+      /* Simple CSS for the UI overlay */
       #ui-overlay {
         position: absolute;
         bottom: 10px;
@@ -26,16 +27,17 @@
   <body>
 
     <div id="ui-overlay">
-      <p>Point your camera at the HIRO marker. <br/> Click the rocket to toggle its visibility!</p>
+      <p>Point your camera at the HIRO marker. <br/> Click the astronaut to toggle its visibility!</p>
     </div>
 
     <a-scene
-      embedded
       vr-mode-ui="enabled: false"
-      arjs="sourceType: webcam; debugUIEnabled: true;">
+      renderer="antialias: true; colorManagement: true"
+      embedded
+      arjs="sourceType: webcam; sourceParameters: { facingMode: 'environment', width: 1280, height: 720 }; displayWidth: 1280; displayHeight: 720; debugUIEnabled: false; patternRatio: 0.75;">
 
       <a-assets>
-        <a-asset-item id="rocket-model" src="https://poly.pizza/m/9D0od8u4kYn/0.glb"></a-asset-item>
+        <a-asset-item id="astronaut-model" src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"></a-asset-item>
       </a-assets>
 
       <a-entity light="type: ambient; intensity: 0.8"></a-entity>
@@ -44,12 +46,12 @@
       <a-marker preset="hiro">
 
         <a-entity
-          id="rocket"
-          gltf-model="#rocket-model"
-          position="0 0.5 0"
-          scale="0.4 0.4 0.4"
-          animation__rotate="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear"
-          animation__bob="property: position; from: 0 0.5 0; to: 0 0.7 0; dir: alternate; loop: true; dur: 1500; easing: easeInOutSine">
+          id="astronaut"
+          gltf-model="#astronaut-model"
+          position="0 0 0"
+          scale="0.25 0.25 0.25"
+          animation__rotate="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear"
+          animation__bob="property: position; from: 0 0 0; to: 0 0.2 0; dir: alternate; loop: true; dur: 2000; easing: easeInOutSine">
         </a-entity>
         
       </a-marker>
@@ -58,13 +60,22 @@
     </a-scene>
 
     <script>
+      // Wait for the scene to load before adding event listeners
       document.addEventListener('DOMContentLoaded', () => {
-        const rocket = document.getElementById('rocket');
+        const astronaut = document.getElementById('astronaut');
+        
+        // A variable to keep track of the model's visibility state
         let isVisible = true;
-        rocket.addEventListener('click', () => {
+
+        // Add a click/tap event listener to the 3D model
+        astronaut.addEventListener('click', () => {
+          // Toggle the state
           isVisible = !isVisible;
-          rocket.setAttribute('visible', isVisible);
+          // Set the 'visible' attribute on the model
+          astronaut.setAttribute('visible', isVisible);
         });
+
+        // Helpful logs for debugging marker detection
         const marker = document.querySelector('a-marker');
         marker.addEventListener('markerFound', () => console.log('HIRO marker found.'));
         marker.addEventListener('markerLost', () => console.log('HIRO marker lost.'));
